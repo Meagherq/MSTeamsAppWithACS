@@ -44,7 +44,7 @@ export function Welcome(props: { showFunction?: boolean; environment?: string; }
       const userInfo = await teamsUserCredential.getUserInfo();
       const token = await teamsUserCredential.getToken("");
       const functionRes = await callFunction(teamsUserCredential);
-      return {userInfo, displayName: userInfo.displayName, token, cToken: functionRes.token};
+      return {userInfo, displayName: userInfo.displayName, token, cToken: functionRes.token, newUserId: functionRes.newUserId, newUserToken: functionRes.newUserToken};
     }
   });
   const userName = loading || error ? "" : data!.displayName;
@@ -96,7 +96,7 @@ export function Welcome(props: { showFunction?: boolean; environment?: string; }
             )}
             {selectedValue === "voice" && (
               <div>
-                <Voice displayName={ data?.displayName } objectId={data?.userInfo.objectId} cToken={data?.cToken.token} />
+                <Voice displayName={ data?.displayName } objectId={data?.userInfo.objectId} cToken={data?.cToken.token} newUserId={data?.newUserId} newUserToken={data?.newUserToken} />
               </div>
             )}
           </div>

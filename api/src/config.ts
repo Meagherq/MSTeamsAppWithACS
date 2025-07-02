@@ -3,6 +3,7 @@ const config = {
   tenantId: process.env.M365_TENANT_ID,
   clientId: process.env.M365_CLIENT_ID,
   clientSecret: process.env.M365_CLIENT_SECRET,
+  acsEndpoint: process.env.ACS_ENDPOINT,
 };
 
 export default config;

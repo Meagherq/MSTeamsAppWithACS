@@ -20,10 +20,8 @@ import {
   useTeamsCallAdapter,
   TeamsCallAdapterArgs
 } from '@azure/communication-react';
-
-const ENDPOINT_URL = '';
-const USER_ID = '';
-const TOKEN = '';
+import config from "./lib/config";
+const ENDPOINT_URL = config.acsEndpoint
 
 const containerStyle: CSSProperties = {
   border: 'solid 0.125rem olive',
@@ -31,9 +29,9 @@ const containerStyle: CSSProperties = {
   width: '50vw',
 };
 
-export function Voice(props: { displayName: string | undefined, objectId: string | undefined, cToken: string | undefined }) {
+export function Voice(props: { displayName: string | undefined, objectId: string | undefined, cToken: string | undefined, newUserId?: string, newUserToken?: string }) {
 
-   const chatArgs = useAzureCommunicationServiceArgs(props.displayName ?? "");
+   const chatArgs = useAzureCommunicationServiceArgs(props.displayName ?? "", ENDPOINT_URL ?? "", props.newUserId ?? "", props.newUserToken ?? "");
 
   const teamsUserId: MicrosoftTeamsUserIdentifier = useMemo(
     () => {
@@ -98,7 +96,7 @@ export function Voice(props: { displayName: string | undefined, objectId: string
   return <h3>Initializing...</h3>;
 };
 
-function useAzureCommunicationServiceArgs(displayName: string): {
+function useAzureCommunicationServiceArgs(displayName: string, endpoint: string, userId: string, token: string): {
   endpointUrl: string;
   acsUserId: string;
   acsUserToken: string;
@@ -110,8 +108,8 @@ function useAzureCommunicationServiceArgs(displayName: string): {
   useEffect(() => {
     (async () => {
       const client = new ChatClient(
-        ENDPOINT_URL,
-        new AzureCommunicationTokenCredential(TOKEN)
+        endpoint,
+        new AzureCommunicationTokenCredential(token)
       );
       const { chatThread } = await client.createChatThread(
         {
@@ -120,7 +118,7 @@ function useAzureCommunicationServiceArgs(displayName: string): {
         {
           participants: [
             {
-              id: fromFlatCommunicationIdentifier(USER_ID),
+              id: fromFlatCommunicationIdentifier(userId),
               displayName: displayName
             },
           ],
@@ -128,15 +126,15 @@ function useAzureCommunicationServiceArgs(displayName: string): {
       );
       setThreadId(chatThread?.id ?? '');
     })();
-  }, [displayName]);
+  }, [displayName, endpoint, userId, token]);
 
   // The group Id must be a UUID.
   const groupId = useRef(uuidv4());
 
   return {
-    endpointUrl: ENDPOINT_URL,
-    acsUserId: USER_ID,
-    acsUserToken: TOKEN,
+    endpointUrl: endpoint,
+    acsUserId: userId,
+    acsUserToken: token,
     displayName: displayName,
     groupId: groupId.current,
     threadId,

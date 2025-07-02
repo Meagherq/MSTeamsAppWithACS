@@ -3,6 +3,7 @@ const config = {
   clientId: import.meta.env.VITE_CLIENT_ID,
   apiEndpoint: import.meta.env.VITE_FUNC_ENDPOINT,
   apiName: import.meta.env.VITE_FUNC_NAME,
+  acsEndpoint: import.meta.env.VITE_ACS_ENDPOINT,
 };
 
 export default config;

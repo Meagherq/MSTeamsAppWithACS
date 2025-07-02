@@ -14,6 +14,7 @@ import {
 } from "@microsoft/teamsfx";
 import config from "../config";
 import { CommunicationIdentityClient } from '@azure/communication-identity';
+import { ClientSecretCredential } from "@azure/identity";
 /**
  * This function handles requests from teamsapp client.
  * The HTTP request should contain an SSO token queried from Teams in the header.
@@ -31,8 +32,7 @@ import { CommunicationIdentityClient } from '@azure/communication-identity';
  * @param {HttpRequest} req - The HTTP request.
  */
 
-const connectionString = "";
-const client = new CommunicationIdentityClient(connectionString);
+
 
 export async function exchangeToken(
   req: HttpRequest,
@@ -40,6 +40,13 @@ export async function exchangeToken(
 ): Promise<HttpResponseInit> {
   context.log("HTTP trigger function processed a request.");
 
+  const clientCredential = new ClientSecretCredential(
+    config.tenantId,
+    config.clientId,
+    config.clientSecret
+  );
+
+  const applicationClient = new CommunicationIdentityClient(config.acsEndpoint, clientCredential);
   // Initialize response.
   const res: HttpResponseInit = {
     status: 200,
@@ -105,8 +112,10 @@ export async function exchangeToken(
     const authProvider = new TokenCredentialAuthenticationProvider(oboCredential, {
       scopes: ["https://auth.msft.communication.azure.com/.default"],
     });
-
-    body.token = await client.getTokenForTeamsUser({ userObjectId: oboCredential.getUserInfo().objectId, clientId: "0c19f3e9-d975-406a-979f-70c1c680afb6", teamsUserAadToken: await authProvider.getAccessToken() })
+    const newUser = await applicationClient.createUserAndToken(["chat", "voip"]);
+    body.newUserId = newUser.user.communicationUserId
+    body.newUserToken = newUser.token
+    body.token = await applicationClient.getTokenForTeamsUser({ userObjectId: oboCredential.getUserInfo().objectId, clientId: config.clientId, teamsUserAadToken: await authProvider.getAccessToken() })
 
   } catch (e) {
     context.error(e);
