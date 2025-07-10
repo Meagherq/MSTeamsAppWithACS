@@ -27,3 +27,10 @@ __azurite_db_blob__.json
 __blobstorage__/AzuriteConfig
 __blobstorage__/27fde848-db24-47e9-b1b4-5fb7e16e2306
 
+/ACSBackend/.vs/*
+/ACSBackend/bin/*
+/ACSBackend/obj/*
+/ACSBackend/ACSBackend.API/bin/*
+/ACSBackend/ACSBackend.API/obj/*
+/ACSBackend/ACSBackend.API/appsettings.Development.json
+__blobstorage__/76f613bb-30f0-427a-b952-b1ca2b8021bd

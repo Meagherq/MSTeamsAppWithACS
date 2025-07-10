@@ -31,8 +31,8 @@ const containerStyle: CSSProperties = {
 
 export function Voice(props: { displayName: string | undefined, objectId: string | undefined, cToken: string | undefined, newUserId?: string, newUserToken?: string }) {
 
-   const chatArgs = useAzureCommunicationServiceArgs(props.displayName ?? "", ENDPOINT_URL ?? "", props.newUserId ?? "", props.newUserToken ?? "");
-
+  const chatArgs = useAzureCommunicationServiceArgs(props.displayName ?? "", ENDPOINT_URL ?? "", props.newUserId ?? "", props.newUserToken ?? "");
+  const [callState, setCallState] = useState<string | undefined>(undefined)
   const teamsUserId: MicrosoftTeamsUserIdentifier = useMemo(
     () => {
       return {
@@ -57,6 +57,18 @@ export function Voice(props: { displayName: string | undefined, objectId: string
     [teamsUserId.microsoftTeamsUserId, props.cToken]
   );
   const callAdapterArgsWithTeams = useTeamsCallAdapter(callAdapterArgs)
+
+  useEffect(() => {
+      callAdapterArgsWithTeams?.onStateChange((e) => {
+      setCallState((prev) => {
+        if (prev !== e.call?.state) {
+          console.log('State Changed from ', prev, ' to ', e.call?.state);
+          return e.call?.state;
+        }
+        return prev;
+      })
+  });
+  }, [callAdapterArgsWithTeams])
 
   const chatAdapterArgs = useMemo(
     () => ({

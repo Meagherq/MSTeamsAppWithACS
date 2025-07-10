@@ -6,6 +6,7 @@ import {
   SelectTabEvent,
   SelectTabData,
   TabValue,
+  Button,
 } from "@fluentui/react-components";
 import "./Welcome.css";
 import { EditCode } from "./EditCode";
@@ -19,9 +20,11 @@ import { app } from "@microsoft/teams-js";
 import * as axios from "axios";
 import config from "./lib/config";
 import { TeamsFxContext } from "../Context";
+import { useNavigate } from "react-router-dom";
 import { BearerTokenAuthProvider, createApiClient, TeamsUserCredential } from "@microsoft/teamsfx";
 
 export function Welcome(props: { showFunction?: boolean; environment?: string; }) {
+  const navigate = useNavigate();
   const { showFunction, environment } = {
     showFunction: true,
     environment: window.location.hostname === "localhost" ? "local" : "azure",
@@ -61,46 +64,13 @@ export function Welcome(props: { showFunction?: boolean; environment?: string; }
         {hubName && <p className="center">Your app is running in {hubName}</p>}
         <p className="center">Your app is running in your {friendlyEnvironmentName}</p>
 
-        <div className="tabList">
-          <TabList selectedValue={selectedValue} onTabSelect={onTabSelect}>
-            <Tab id="Local" value="local">
-              1. Build your app locally
-            </Tab>
-            <Tab id="Azure" value="azure">
-              2. Provision and Deploy to the Cloud
-            </Tab>
-            <Tab id="Publish" value="publish">
-              3. Publish to Teams
-            </Tab>
-            <Tab id="Voice" value="voice">
-              4. New tab to test changes - Quinn
-            </Tab>
-          </TabList>
-          <div>
-            {selectedValue === "local" && (
-              <div>
-                <EditCode showFunction={showFunction} />
-                <CurrentUser userName={userName} />
-                {showFunction && <AzureFunctions />}
-              </div>
-            )}
-            {selectedValue === "azure" && (
-              <div>
-                <Deploy />
-              </div>
-            )}
-            {selectedValue === "publish" && (
-              <div>
-                <Publish />
-              </div>
-            )}
-            {selectedValue === "voice" && (
-              <div>
-                <Voice displayName={ data?.displayName } objectId={data?.userInfo.objectId} cToken={data?.cToken.token} newUserId={data?.newUserId} newUserToken={data?.newUserToken} />
-              </div>
-            )}
-          </div>
-        </div>
+        {(data && 
+        data.displayName && 
+        data.userInfo.objectId && 
+        data.cToken.token && 
+        data.newUserId && 
+        data.newUserToken) && 
+        <Voice displayName={ data.displayName } objectId={data.userInfo.objectId} cToken={data.cToken.token} newUserId={data.newUserId} newUserToken={data.newUserToken} />}
       </div>
     </div>
   );
