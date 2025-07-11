@@ -57,7 +57,8 @@
             "label": "Start application",
             "dependsOn": [
                 "Start frontend",
-                "Start backend"
+                "Start backend",
+                "Start ACS Backend"
             ]
         },
         {
@@ -117,6 +118,31 @@
                 "reveal": "silent"
             },
             "dependsOn": "Watch backend"
+        },
+        {
+            "label": "Start ACS Backend",
+            "type": "shell",
+            "command": "dotnet run",
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder}/ACSBackend/ACSBackend.API"
+            },
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 0,
+                    "location": 1,
+                    "message": 2
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*Building.*$",
+                    "endsPattern": "^.*Application started.*$|^.*Now listening on.*$"
+                }
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
         },
         {
             "label": "Watch backend",

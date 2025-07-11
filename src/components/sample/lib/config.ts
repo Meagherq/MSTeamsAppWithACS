@@ -4,6 +4,8 @@ const config = {
   apiEndpoint: import.meta.env.VITE_FUNC_ENDPOINT,
   apiName: import.meta.env.VITE_FUNC_NAME,
   acsEndpoint: import.meta.env.VITE_ACS_ENDPOINT,
+  acsDotnetEndpoint: import.meta.env.VITE_DOTNET_FUNC_ENDPOINT,
+  useDotnetBackend: import.meta.env.VITE_USE_DOTNET_BACKEND,
 };
 
 export default config;

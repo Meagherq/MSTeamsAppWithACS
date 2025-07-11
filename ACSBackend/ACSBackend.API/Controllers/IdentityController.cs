@@ -41,12 +41,18 @@ namespace ACSBackend.API.Controllers
         /// Exchanges the user's token for an Azure Communication Services token using On-Behalf-Of flow
         /// </summary>
         /// <returns>ACS access token and user identity</returns>
-        [HttpPost("exchange-token")]
+        [HttpGet("exchangeToken")]
         public async Task<ActionResult<AcsTokenResponse>> ExchangeTokenAsync()
         {
             try
             {
                 _logger.LogInformation("Starting token exchange for ACS");
+
+                var clientCredential = new ClientSecretCredential(
+                    _options.Value.TenantId,
+                    _options.Value.ClientId,
+                    _options.Value.ClientSecret
+                );
 
                 // Get the user's Azure AD object ID
                 var userObjectId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value 
@@ -75,7 +81,7 @@ namespace ACSBackend.API.Controllers
                 }
 
                 // Create ACS identity client
-                var identityClient = new CommunicationIdentityClient(acsConnectionString);
+                var identityClient = new CommunicationIdentityClient(new Uri(acsConnectionString), clientCredential);
 
                 // Create or get ACS user identity
                 var acsUser = await identityClient.CreateUserAsync();
@@ -94,7 +100,7 @@ namespace ACSBackend.API.Controllers
                 {
                     newUserToken = tokenResponse.Value.Token,
                     newUserId = acsUser.Value.Id,
-                    cToken = ACSTeamsToken.Value.Token
+                    token = ACSTeamsToken.Value.Token
                 });
             }
             catch (MsalException msalEx)
@@ -114,7 +120,7 @@ namespace ACSBackend.API.Controllers
         /// </summary>
         /// <param name="acsUserId">The ACS user identifier</param>
         /// <returns>New ACS access token</returns>
-        [HttpPost("refresh-acs-token")]
+        [HttpPost("refreshAcsToken")]
         public async Task<ActionResult<AcsTokenRefreshResponse>> RefreshAcsTokenAsync([FromBody] RefreshTokenRequest request)
         {
             try

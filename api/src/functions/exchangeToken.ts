@@ -115,7 +115,7 @@ export async function exchangeToken(
     const newUser = await applicationClient.createUserAndToken(["chat", "voip"]);
     body.newUserId = newUser.user.communicationUserId
     body.newUserToken = newUser.token
-    body.token = await applicationClient.getTokenForTeamsUser({ userObjectId: oboCredential.getUserInfo().objectId, clientId: config.clientId, teamsUserAadToken: await authProvider.getAccessToken() })
+    body.token = (await applicationClient.getTokenForTeamsUser({ userObjectId: oboCredential.getUserInfo().objectId, clientId: config.clientId, teamsUserAadToken: await authProvider.getAccessToken() })).token;
 
   } catch (e) {
     context.error(e);

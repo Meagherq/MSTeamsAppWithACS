@@ -67,10 +67,10 @@ export function Welcome(props: { showFunction?: boolean; environment?: string; }
         {(data && 
         data.displayName && 
         data.userInfo.objectId && 
-        data.cToken.token && 
+        data.cToken && 
         data.newUserId && 
         data.newUserToken) && 
-        <Voice displayName={ data.displayName } objectId={data.userInfo.objectId} cToken={data.cToken.token} newUserId={data.newUserId} newUserToken={data.newUserToken} />}
+        <Voice displayName={ data.displayName } objectId={data.userInfo.objectId} cToken={data.cToken} newUserId={data.newUserId} newUserToken={data.newUserToken} />}
       </div>
     </div>
   );
@@ -78,7 +78,7 @@ export function Welcome(props: { showFunction?: boolean; environment?: string; }
 
 async function callFunction(teamsUserCredential: TeamsUserCredential) {
   try {
-    const apiBaseUrl = config.apiEndpoint + "/api/";
+    const apiBaseUrl = config.useDotnetBackend === "true" ? config.acsDotnetEndpoint + "/Identity/" : config.apiEndpoint + "/api/";
     // createApiClient(...) creates an Axios instance which uses BearerTokenAuthProvider to inject token to request header
     const apiClient = createApiClient(
       apiBaseUrl,
