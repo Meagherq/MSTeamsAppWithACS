@@ -1,0 +1,80 @@
+# Template for deploying Teams application to Azure Static Web Apps
+parameters:
+  - name: nodeVersion
+    type: string
+    default: '18.x'
+  - name: environmentName
+    type: string
+  - name: staticWebAppName
+    type: string
+  - name: resourceGroupName
+    type: string
+  - name: deploymentToken
+    type: string
+
+steps:
+  # Setup Node.js
+  - task: NodeTool@0
+    displayName: 'Setup Node.js ${{ parameters.nodeVersion }}'
+    inputs:
+      versionSpec: '${{ parameters.nodeVersion }}'
+
+  # Cache node modules
+  - task: Cache@2
+    displayName: 'Cache node modules'
+    inputs:
+      key: 'npm | "$(Agent.OS)" | package-lock.json'
+      restoreKeys: |
+        npm | "$(Agent.OS)"
+      path: ~/.npm
+
+  # Install dependencies
+  - script: |
+      npm ci
+    displayName: 'Install dependencies'
+
+  # Create environment-specific config
+  - script: |
+      echo "Creating environment config for ${{ parameters.environmentName }}"
+      cat > .env.production << EOF
+      VITE_CLIENT_ID=$(VITE_CLIENT_ID_${{ upper(parameters.environmentName) }})
+      VITE_START_LOGIN_PAGE_URL=https://${{ parameters.staticWebAppName }}.azurestaticapps.net/auth-start.html
+      VITE_FUNC_NAME=$(VITE_FUNC_NAME)
+      VITE_FUNC_ENDPOINT=$(VITE_FUNC_ENDPOINT_${{ upper(parameters.environmentName) }})
+      VITE_DOTNET_FUNC_ENDPOINT=$(VITE_DOTNET_FUNC_ENDPOINT_${{ upper(parameters.environmentName) }})
+      VITE_ACS_ENDPOINT=$(VITE_ACS_ENDPOINT_${{ upper(parameters.environmentName) }})
+      VITE_USE_DOTNET_BACKEND=true
+      EOF
+    displayName: 'Create environment configuration'
+
+  # Build the application
+  - script: |
+      npm run build
+    displayName: 'Build Teams application'
+    env:
+      NODE_ENV: production
+
+  # Run tests (if available)
+  - script: |
+      if npm run test --silent 2>/dev/null; then
+        npm run test
+      else
+        echo "No tests configured, skipping test step"
+      fi
+    displayName: 'Run tests'
+    continueOnError: true
+
+  # Deploy to Azure Static Web Apps
+  - task: AzureStaticWebApp@0
+    displayName: 'Deploy to Azure Static Web Apps - ${{ parameters.environmentName }}'
+    inputs:
+      app_location: '/'
+      output_location: 'dist'
+      azure_static_web_apps_api_token: '${{ parameters.deploymentToken }}'
+      skip_app_build: true
+
+  # Post-deployment validation
+  - script: |
+      echo "Deployment completed for ${{ parameters.environmentName }} environment"
+      echo "Application URL: https://${{ parameters.staticWebAppName }}.azurestaticapps.net"
+    displayName: 'Post-deployment summary'

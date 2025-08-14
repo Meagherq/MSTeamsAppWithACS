@@ -1,0 +1,183 @@
+# GitHub Actions Workflow for Teams Application Deployment
+# Deploys the frontend Teams application to Azure Static Web Apps
+# with separate jobs for Dev, Test, and Production environments
+
+name: Deploy Teams App to Azure Static Web Apps
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  # Development Environment
+  deploy-dev:
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: 
+      name: Development
+      url: https://teams-app-dev.azurestaticapps.net
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create environment configuration
+        run: |
+          cat > .env.production << EOF
+          VITE_CLIENT_ID=${{ secrets.VITE_CLIENT_ID_DEV }}
+          VITE_START_LOGIN_PAGE_URL=https://teams-app-dev.azurestaticapps.net/auth-start.html
+          VITE_FUNC_NAME=${{ vars.VITE_FUNC_NAME }}
+          VITE_FUNC_ENDPOINT=${{ secrets.VITE_FUNC_ENDPOINT_DEV }}
+          VITE_DOTNET_FUNC_ENDPOINT=${{ secrets.VITE_DOTNET_FUNC_ENDPOINT_DEV }}
+          VITE_ACS_ENDPOINT=${{ secrets.VITE_ACS_ENDPOINT_DEV }}
+          VITE_USE_DOTNET_BACKEND=true
+          EOF
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to Azure Static Web Apps (Dev)
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_DEV }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: '/'
+          output_location: 'dist'
+          skip_app_build: true
+
+  # Test Environment
+  deploy-test:
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: 
+      name: Test
+      url: https://teams-app-test.azurestaticapps.net
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create environment configuration
+        run: |
+          cat > .env.production << EOF
+          VITE_CLIENT_ID=${{ secrets.VITE_CLIENT_ID_TEST }}
+          VITE_START_LOGIN_PAGE_URL=https://teams-app-test.azurestaticapps.net/auth-start.html
+          VITE_FUNC_NAME=${{ vars.VITE_FUNC_NAME }}
+          VITE_FUNC_ENDPOINT=${{ secrets.VITE_FUNC_ENDPOINT_TEST }}
+          VITE_DOTNET_FUNC_ENDPOINT=${{ secrets.VITE_DOTNET_FUNC_ENDPOINT_TEST }}
+          VITE_ACS_ENDPOINT=${{ secrets.VITE_ACS_ENDPOINT_TEST }}
+          VITE_USE_DOTNET_BACKEND=true
+          EOF
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to Azure Static Web Apps (Test)
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_TEST }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: '/'
+          output_location: 'dist'
+          skip_app_build: true
+
+  # Production Environment
+  deploy-prod:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: 
+      name: Production
+      url: https://teams-app-prod.azurestaticapps.net
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create environment configuration
+        run: |
+          cat > .env.production << EOF
+          VITE_CLIENT_ID=${{ secrets.VITE_CLIENT_ID_PROD }}
+          VITE_START_LOGIN_PAGE_URL=https://teams-app-prod.azurestaticapps.net/auth-start.html
+          VITE_FUNC_NAME=${{ vars.VITE_FUNC_NAME }}
+          VITE_FUNC_ENDPOINT=${{ secrets.VITE_FUNC_ENDPOINT_PROD }}
+          VITE_DOTNET_FUNC_ENDPOINT=${{ secrets.VITE_DOTNET_FUNC_ENDPOINT_PROD }}
+          VITE_ACS_ENDPOINT=${{ secrets.VITE_ACS_ENDPOINT_PROD }}
+          VITE_USE_DOTNET_BACKEND=true
+          EOF
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to Azure Static Web Apps (Production)
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROD }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: '/'
+          output_location: 'dist'
+          skip_app_build: true
+
+  # Cleanup on PR close
+  close_pull_request:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_DEV }}
+          action: 'close'

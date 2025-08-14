@@ -1,0 +1,113 @@
+# Azure DevOps Pipeline for Teams Application Deployment
+# Deploys the frontend Teams application to Azure Static Web Apps
+# with separate stages for Dev, Test, and Production environments
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/*
+      - package.json
+      - vite.config.ts
+      - tsconfig.json
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/*
+      - package.json
+      - vite.config.ts
+      - tsconfig.json
+
+variables:
+  nodeVersion: '18.x'
+  buildConfiguration: 'production'
+
+stages:
+  # Development Environment
+  - stage: Dev
+    displayName: 'Deploy to Development'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/develop')
+    variables:
+      environmentName: 'dev'
+      staticWebAppName: 'teams-app-dev'
+      resourceGroupName: 'rg-teams-app-dev'
+    jobs:
+      - deployment: DeployToDev
+        displayName: 'Deploy to Dev Environment'
+        environment: 'Development'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: templates/deploy-static-web-app.yml
+                  parameters:
+                    nodeVersion: $(nodeVersion)
+                    environmentName: $(environmentName)
+                    staticWebAppName: $(staticWebAppName)
+                    resourceGroupName: $(resourceGroupName)
+                    deploymentToken: $(AZURE_STATIC_WEB_APPS_API_TOKEN_DEV)
+
+  # Test Environment
+  - stage: Test
+    displayName: 'Deploy to Test'
+    condition: and(succeeded('Dev'), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+    dependsOn: Dev
+    variables:
+      environmentName: 'test'
+      staticWebAppName: 'teams-app-test'
+      resourceGroupName: 'rg-teams-app-test'
+    jobs:
+      - deployment: DeployToTest
+        displayName: 'Deploy to Test Environment'
+        environment: 'Test'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: templates/deploy-static-web-app.yml
+                  parameters:
+                    nodeVersion: $(nodeVersion)
+                    environmentName: $(environmentName)
+                    staticWebAppName: $(staticWebAppName)
+                    resourceGroupName: $(resourceGroupName)
+                    deploymentToken: $(AZURE_STATIC_WEB_APPS_API_TOKEN_TEST)
+
+  # Production Environment
+  - stage: Production
+    displayName: 'Deploy to Production'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    variables:
+      environmentName: 'prod'
+      staticWebAppName: 'teams-app-prod'
+      resourceGroupName: 'rg-teams-app-prod'
+    jobs:
+      - deployment: DeployToProduction
+        displayName: 'Deploy to Production Environment'
+        environment: 'Production'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: templates/deploy-static-web-app.yml
+                  parameters:
+                    nodeVersion: $(nodeVersion)
+                    environmentName: $(environmentName)
+                    staticWebAppName: $(staticWebAppName)
+                    resourceGroupName: $(resourceGroupName)
+                    deploymentToken: $(AZURE_STATIC_WEB_APPS_API_TOKEN_PROD)
