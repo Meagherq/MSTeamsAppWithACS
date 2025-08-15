@@ -31,7 +31,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Development
-      url: https://teams-app-dev.azurestaticapps.net
     
     steps:
       - name: Checkout code
@@ -50,7 +49,7 @@ jobs:
         run: |
           cat > .env.production << EOF
           VITE_CLIENT_ID=${{ secrets.VITE_CLIENT_ID_DEV }}
-          VITE_START_LOGIN_PAGE_URL=https://teams-app-dev.azurestaticapps.net/auth-start.html
+          VITE_START_LOGIN_PAGE_URL=${{ secrets.AZURE_STATIC_WEB_APPS_ENDPOINT_DEV }}/auth-start.html
           VITE_FUNC_NAME=${{ vars.VITE_FUNC_NAME }}
           VITE_FUNC_ENDPOINT=${{ secrets.VITE_FUNC_ENDPOINT_DEV }}
           VITE_DOTNET_FUNC_ENDPOINT=${{ secrets.VITE_DOTNET_FUNC_ENDPOINT_DEV }}
@@ -63,14 +62,23 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Check build output size
+        run: |
+          echo "Build output directory contents:"
+          ls -la dist/
+          echo "Build output size:"
+          du -sh dist/
+          echo "Total files in dist:"
+          find dist/ -type f | wc -l
+
       - name: Deploy to Azure Static Web Apps (Dev)
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_DEV }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: '/'
-          output_location: 'dist'
+          app_location: 'dist'
+          output_location: ''
           skip_app_build: true
 
   # Test Environment
@@ -80,7 +88,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Test
-      url: https://teams-app-test.azurestaticapps.net
     
     steps:
       - name: Checkout code
@@ -99,7 +106,7 @@ jobs:
         run: |
           cat > .env.production << EOF
           VITE_CLIENT_ID=${{ secrets.VITE_CLIENT_ID_TEST }}
-          VITE_START_LOGIN_PAGE_URL=https://teams-app-test.azurestaticapps.net/auth-start.html
+          VITE_START_LOGIN_PAGE_URL=${{ secrets.AZURE_STATIC_WEB_APPS_ENDPOINT_TEST }}/auth-start.html
           VITE_FUNC_NAME=${{ vars.VITE_FUNC_NAME }}
           VITE_FUNC_ENDPOINT=${{ secrets.VITE_FUNC_ENDPOINT_TEST }}
           VITE_DOTNET_FUNC_ENDPOINT=${{ secrets.VITE_DOTNET_FUNC_ENDPOINT_TEST }}
@@ -118,8 +125,8 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_TEST }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: '/'
-          output_location: 'dist'
+          app_location: 'dist'
+          output_location: ''
           skip_app_build: true
 
   # Production Environment
@@ -128,7 +135,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: Production
-      url: https://teams-app-prod.azurestaticapps.net
     
     steps:
       - name: Checkout code
@@ -147,7 +153,7 @@ jobs:
         run: |
           cat > .env.production << EOF
           VITE_CLIENT_ID=${{ secrets.VITE_CLIENT_ID_PROD }}
-          VITE_START_LOGIN_PAGE_URL=https://teams-app-prod.azurestaticapps.net/auth-start.html
+          VITE_START_LOGIN_PAGE_URL=${{ secrets.AZURE_STATIC_WEB_APPS_ENDPOINT_PROD }}/auth-start.html
           VITE_FUNC_NAME=${{ vars.VITE_FUNC_NAME }}
           VITE_FUNC_ENDPOINT=${{ secrets.VITE_FUNC_ENDPOINT_PROD }}
           VITE_DOTNET_FUNC_ENDPOINT=${{ secrets.VITE_DOTNET_FUNC_ENDPOINT_PROD }}
@@ -166,8 +172,8 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROD }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: '/'
-          output_location: 'dist'
+          app_location: 'dist'
+          output_location: ''
           skip_app_build: true
 
   # Cleanup on PR close

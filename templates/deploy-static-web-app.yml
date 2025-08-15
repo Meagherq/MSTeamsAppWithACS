@@ -54,6 +54,16 @@ steps:
     env:
       NODE_ENV: production
 
+  # Check build output size
+  - script: |
+      echo "Build output directory contents:"
+      ls -la dist/
+      echo "Build output size:"
+      du -sh dist/
+      echo "Total files in dist:"
+      find dist/ -type f | wc -l
+    displayName: 'Check build output size'
+
   # Run tests (if available)
   - script: |
       if npm run test --silent 2>/dev/null; then
@@ -68,8 +78,8 @@ steps:
   - task: AzureStaticWebApp@0
     displayName: 'Deploy to Azure Static Web Apps - ${{ parameters.environmentName }}'
     inputs:
-      app_location: '/'
-      output_location: 'dist'
+      app_location: 'dist'
+      output_location: ''
       azure_static_web_apps_api_token: '${{ parameters.deploymentToken }}'
       skip_app_build: true
 

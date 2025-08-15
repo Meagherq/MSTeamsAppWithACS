@@ -170,6 +170,29 @@ Monitor deployments in Azure Portal:
 3. **Branch Protection**: Production deploys only from `main` branch
 4. **Manual Approvals**: Configure environment approvals for sensitive deployments
 
+## Build Output Optimization
+
+The pipelines are configured to deploy only the built JavaScript bundles and assets from the `dist/` folder, not the entire repository including `node_modules`. This keeps deployments under the 500MB limit for Azure Static Web Apps.
+
+### What gets deployed:
+- ✅ Built JavaScript bundles (`dist/assets/*.js`)
+- ✅ Built CSS files (`dist/assets/*.css`) 
+- ✅ Static assets (images, fonts, etc.)
+- ✅ `index.html` and other HTML files
+- ✅ Manifest files and service worker (if any)
+
+### What gets excluded:
+- ❌ `node_modules/` directory (~750MB)
+- ❌ Source TypeScript files (`src/`)
+- ❌ Configuration files (`tsconfig.json`, `vite.config.ts`)
+- ❌ Development dependencies and build tools
+
+### Pipeline Configuration:
+- `app_location: 'dist'` - Deploy only the build output
+- `output_location: ''` - No additional build step needed
+- `skip_app_build: true` - Use pre-built assets
+- Build size validation included in pipeline logs
+
 ## Customization
 
 ### Adding New Environments

@@ -18,6 +18,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddInMemoryTokenCaches(); // Consider using distributed cache in production
 builder.Services.AddOptions<AzureAdOptions>().BindConfiguration("AzureAd");
 // Add Azure Communication Services
+// For DI, haven't hooked it up as DI yet, will add in next commit.
 builder.Services.AddAzureCommunicationServices(builder.Configuration);
 
 builder.Services.AddControllers();
